@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -36,7 +36,7 @@ class Settings:
     retry_backoff_min: float = 1.0
     retry_backoff_max: float = 8.0
     default_start_year: int = 2023
-    default_end_year: int = datetime.utcnow().year
+    default_end_year: int = datetime.now(timezone.utc).year
     discovery_max_pages_per_year: int = 80
     discovery_max_pages_category: int = 120
 

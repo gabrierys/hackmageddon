@@ -66,7 +66,7 @@ def parse_table_to_dataframe(table_tag: Tag, headers: list[str]) -> pd.DataFrame
             link = cell.find("a", href=True)
             text = clean_text(cell.get_text(" ", strip=True))
             if normalize_header_key(header) == "link" and link:
-                row[header] = clean_text(link.get("href", "")) or text
+                row[header] = clean_text(str(link.get("href") or "")) or text
             else:
                 row[header] = text
 
@@ -74,7 +74,7 @@ def parse_table_to_dataframe(table_tag: Tag, headers: list[str]) -> pd.DataFrame
             records.append(row)
 
     if not records:
-        return pd.DataFrame(columns=headers)
+        return pd.DataFrame(columns=pd.Index(headers))
 
     df = pd.DataFrame(records)
     for col in headers:

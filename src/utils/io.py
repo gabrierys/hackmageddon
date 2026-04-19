@@ -32,7 +32,7 @@ def load_csv(path: Path) -> pd.DataFrame:
 
 def load_csv_or_empty(path: Path, columns: list[str] | None = None) -> pd.DataFrame:
     if not path.exists():
-        return pd.DataFrame(columns=columns or [])
+        return pd.DataFrame(columns=pd.Index(columns or []))
     return pd.read_csv(path)
 
 

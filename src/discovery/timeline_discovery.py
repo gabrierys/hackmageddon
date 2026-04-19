@@ -80,7 +80,7 @@ def discover_timeline_urls(
         logger.exception("Failed discovery for category pages: %s", exc)
 
     if not rows:
-        df = pd.DataFrame(columns=["timeline_url", "source_year", "discovered_from", "discovered_at"])
+        df = pd.DataFrame(columns=pd.Index(["timeline_url", "source_year", "discovered_from", "discovered_at"]))
     else:
         df = pd.DataFrame(rows)
         df = df.sort_values(["timeline_url", "discovered_from"]).drop_duplicates(

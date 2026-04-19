@@ -22,7 +22,7 @@ def _extract_links(html: str, current_url: str) -> list[str]:
     soup = BeautifulSoup(html, "lxml")
     links: list[str] = []
     for anchor in soup.find_all("a", href=True):
-        absolute = urljoin(current_url, anchor["href"])
+        absolute = urljoin(current_url, str(anchor["href"]))
         links.append(canonicalize_url(absolute))
     return links
 
