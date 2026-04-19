@@ -1,43 +1,39 @@
-# Hackmageddon Scraper (reprodutível, estilo SENTINEL)
+# Hackmageddon Scraper
 
-Projeto Python para reproduzir um dataset de incidentes cibernéticos a partir da fonte primária **Hackmageddon**, seguindo a lógica metodológica descrita no artigo SENTINEL:
+Pipeline reprodutível para coletar e preparar eventos cibernéticos do **Hackmageddon** com foco em alinhamento metodológico ao artigo **SENTINEL**.
 
-1. importar timelines do Hackmageddon;
+## Objetivo
+
+Construir um dataset auditável em três camadas:
+- `raw`: extração sem perda de contexto da timeline;
+- `normalized`: padronização de datas/categorias e deduplicação conservadora;
+- `analítica`: recorte temporal (2023+) e agregação diária por `date_occurred`.
+
+## Alinhamento metodológico com o artigo
+
+Este projeto implementa a sequência central descrita no SENTINEL para o ground truth do Hackmageddon:
+1. importar timelines de ataques;
 2. padronizar datas;
-3. filtrar por `Date Occurred` válido;
-4. recortar a partir de 2023;
-5. agregar em série diária.
+3. manter registros com `Date Occurred` válido;
+4. filtrar a partir de `2023-01-01`;
+5. reamostrar em frequência diária;
+6. aplicar taxonomia analítica (`Unknown`/raros -> `other`; CVE/vulnerabilities -> `vulnerability`).
 
-## Relação com o artigo
+## Escopo e limites
 
-O artigo reporta um ground truth com 6.957 eventos compilados do Hackmageddon e uma camada analítica baseada em registros com `Date Occurred` válido, recorte em 2023+, reamostragem diária e regras de taxonomia (`Unknown`/raros -> `other`; variações de CVE/vulnerabilities -> `vulnerability`).
+- Fonte primária: páginas de timeline do Hackmageddon (OSINT).
+- Parser robusto para pequenas variações de HTML, priorizando extração tabular.
+- O total de eventos pode divergir de valores publicados no artigo devido a mudanças históricas no site, correções editoriais e janela temporal de coleta.
 
-Este projeto implementa essa sequência com persistência em camadas `raw`, `normalized` e `processed`.
+## Requisitos
 
-## Limitações de reprodutibilidade
-
-- O site pode mudar ao longo do tempo (edições históricas, correções, remoções/adaptações de posts).
-- O total final pode divergir de 6.957 por diferenças de momento de coleta e conteúdo publicado.
-- O parser é defensivo, mas depende da presença de tabelas HTML com cabeçalhos mínimos.
-
-## Estrutura
-
-```text
-hackmageddon_scraper/
-  data/
-    raw/
-      html/
-    interim/
-    processed/
-    logs/
-  src/
-  tests/
-```
+- Python **3.11+**
+- Dependências em `requirements.txt`
 
 ## Instalação
 
 ```bash
-cd hackmageddon_scraper
+cd hackmageddon
 python3.11 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -45,80 +41,71 @@ pip install -r requirements.txt
 
 ## Execução
 
-Descobrir timelines por ano:
+### 1) Descoberta de URLs de timeline
 
 ```bash
 python -m src.cli discover --start-year 2023 --end-year 2026
 ```
 
-Raspar tabelas e salvar raw:
+### 2) Scraping e persistência raw
 
 ```bash
 python -m src.cli scrape
 ```
 
-Normalizar campos e datas:
+### 3) Normalização
 
 ```bash
 python -m src.cli normalize
 ```
 
-Gerar recorte 2023+ e série diária:
+### 4) Recorte analítico e contagem diária
 
 ```bash
 python -m src.cli daily-counts
 ```
 
-Executar pipeline completo:
+### Pipeline completo
 
 ```bash
 python -m src.cli all --start-year 2023 --end-year 2026
 ```
 
-## Datasets gerados
+## Artefatos gerados
 
-- `data/interim/timeline_urls.csv`: URLs finais descobertas de timelines.
-- `data/processed/hackmageddon_raw.csv`: tabela bruta (com metadados de origem).
-- `data/processed/hackmageddon_normalized.csv`: camada normalizada com parsing de datas, taxonomia e `row_hash`.
-- `data/processed/hackmageddon_2023plus.csv`: subset analítico (`date_occurred` parseável e >= 2023-01-01; `attack_norm` colapsado).
-- `data/processed/hackmageddon_daily_counts.csv`: agregação diária (`date`, `events_per_day`) com base em `date_occurred`.
-- `data/logs/scrape.log`: log de execução.
+- `data/interim/timeline_urls.csv`
+- `data/processed/hackmageddon_raw.csv`
+- `data/processed/hackmageddon_normalized.csv`
+- `data/processed/hackmageddon_2023plus.csv`
+- `data/processed/hackmageddon_daily_counts.csv`
+- `data/logs/scrape.log`
 
-## Regras implementadas
+## Regras principais implementadas
 
 ### Descoberta
-
-- consulta arquivos anuais `/{year}/`;
-- percorre paginação dos arquivos anuais (ex.: `/{year}/page/N/`) para ampliar cobertura;
-- usa fallback pela categoria `cyber-attacks-timeline` com paginação;
-- extrai links internos contendo `cyber-attacks-timeline`;
-- mantém apenas URLs de posts de timeline (evita páginas de categoria como evento);
-- deduplica URLs canônicas;
-- salva em `data/interim/timeline_urls.csv`.
+- Crawl em arquivos anuais e suas paginações.
+- Fallback por categoria de timeline com paginação.
+- Deduplicação canônica de URLs.
+- Filtro para manter apenas URLs de post de timeline (exclui páginas de categoria).
 
 ### Parsing
-
-- baixa HTML de cada timeline;
-- salva HTML bruto em `data/raw/html/` para auditoria;
-- seleciona apenas tabelas que contenham pelo menos `Date Reported`, `Attack`, `Target`;
-- preserva nomes originais na camada raw;
-- adiciona `source_timeline_url`, `source_year`, `scraped_at`, `page_title`.
+- Download de HTML por página com retry/backoff.
+- Seleção de tabelas com cabeçalhos mínimos (`Date Reported`, `Attack`, `Target`).
+- Preservação dos nomes originais de colunas na camada raw.
+- Metadados de origem: `source_timeline_url`, `source_year`, `scraped_at`, `page_title`.
 
 ### Normalização
-
-- mapeia para schema estável;
-- parseia apenas datas explícitas (ex.: `dd/mm/yyyy` e `yyyy-mm-dd`);
-- mantém datas vagas/textuais sem inferência indevida;
-- gera `parse_status_*` por campo de data;
-- unifica menções de CVE/vulnerabilities em `vulnerability`;
-- cria `row_hash` e remove duplicatas exatas.
+- Conversão confiável de datas explícitas (`dd/mm/yyyy`, `yyyy-mm-dd`).
+- Sem inferência para datas vagas (`Recently`, intervalos textuais etc.).
+- Status de parsing por campo de data.
+- `attack_norm` com unificação determinística de vulnerabilidades.
+- `row_hash` para deduplicação exata, sem colapso agressivo.
 
 ### Camada analítica
-
-- mantém apenas `date_occurred` parseável;
-- filtra `date_occurred >= 2023-01-01`;
-- aplica colapso: `unknown -> other` e classes com frequência `< 5` -> `other`;
-- agrega por dia usando `date_occurred`.
+- Apenas linhas com `date_occurred` parseável.
+- Filtro `date_occurred >= 2023-01-01`.
+- Colapso de classes raras (`<5`) e `unknown` para `other`.
+- Agregação diária em `events_per_day` usando `date_occurred`.
 
 ## Testes
 
@@ -126,15 +113,33 @@ python -m src.cli all --start-year 2023 --end-year 2026
 pytest -q
 ```
 
-Cobertura básica incluída:
+Cobertura básica:
 - parsing de datas explícitas;
-- preservação de datas vagas sem conversão;
-- mapeamento `attack_raw -> attack_norm`;
-- identificação correta de tabela válida.
+- preservação de datas vagas;
+- mapeamento de taxonomia de ataque;
+- identificação de tabela válida;
+- validação de URLs de timeline.
 
-## Observações éticas e operacionais
+## Considerações éticas e operacionais
 
-- Respeite termos de uso do site e robots policy aplicável.
-- Use taxa moderada de requisições (o projeto já aplica jitter/sleep e retry com backoff).
-- Preserve HTML bruto para auditabilidade.
-- Evite enriquecer artificialmente o dataset quando o objetivo for reprodução metodológica.
+- Respeite termos de uso e políticas aplicáveis do site-alvo.
+- Mantenha taxa de requisições moderada (o projeto já aplica `timeout`, `retry`, `backoff` e `sleep` aleatório).
+- Preserve HTML bruto para auditabilidade e reprodutibilidade.
+- Não use o pipeline para coleta abusiva, evasão de controles ou violação de privacidade.
+
+## Estrutura do projeto
+
+```text
+hackmageddon_scraper/
+  data/
+    raw/
+    interim/
+    processed/
+    logs/
+  src/
+  tests/
+```
+
+## Licença
+
+Este projeto está licenciado sob a **MIT License**. Consulte o arquivo `LICENSE`.
