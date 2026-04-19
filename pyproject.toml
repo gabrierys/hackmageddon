@@ -12,3 +12,6 @@ license = { text = "MIT" }
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+
+[tool.ty.environment]
+python = ".venv"
