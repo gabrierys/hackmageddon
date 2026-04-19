@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hackmageddon-scraper"
+version = "0.1.0"
+description = "Reprodutor de dataset Hackmageddon no estilo metodológico do artigo SENTINEL"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

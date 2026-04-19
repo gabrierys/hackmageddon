@@ -1,0 +1,40 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+.venv/
+venv/
+env/
+.DS_Store
+.idea/
+.vscode/
+*.egg-info/
+build/
+dist/
+pip-wheel-metadata/
+
+# Documentação local (não publicar)
+docs/
+
+# Dados gerados
+/data/raw/html/*.html
+/data/interim/*.csv
+/data/processed/*.csv
+/data/logs/*.log
+
+# Mantém pastas versionadas
+!/data/raw/.gitkeep
+!/data/raw/html/.gitkeep
+!/data/interim/.gitkeep
+!/data/processed/.gitkeep
+!/data/logs/.gitkeep
