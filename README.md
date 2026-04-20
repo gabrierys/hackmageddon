@@ -80,6 +80,11 @@ python -m src.cli all --start-year 2023 --end-year 2026
 - `data/processed/hackmageddon_daily_counts.csv`
 - `data/logs/scrape.log`
 
+### Arquivo final
+
+- O CSV final da pipeline é `data/processed/hackmageddon_daily_counts.csv`, gerado na etapa `daily-counts`.
+- Se você quiser o dataset final em nível de evento, antes da agregação diária, use `data/processed/hackmageddon_2023plus.csv`.
+
 ## Regras principais implementadas
 
 ### Descoberta
