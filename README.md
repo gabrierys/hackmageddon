@@ -139,6 +139,11 @@ hackmageddon_scraper/
   src/
   tests/
 ```
+## Referência
+
+Saeed, Mohammad Hammas, and Howie Huang. "SENTINEL: A Multi-Modal Early Detection Framework for Emerging Cyber Threats using Telegram." arXiv preprint arXiv:2512.21380 (2025).
+
+
 
 ## Licença
 
