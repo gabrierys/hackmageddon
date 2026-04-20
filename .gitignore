@@ -28,8 +28,8 @@ docs/
 
 # Dados gerados
 /data/raw/html/*.html
-/data/interim/*.csv
-/data/processed/*.csv
+#/data/interim/*.csv
+#/data/processed/*.csv
 /data/logs/*.log
 
 # Mantém pastas versionadas
